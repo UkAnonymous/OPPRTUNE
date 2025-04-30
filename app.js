@@ -14,7 +14,6 @@ const Resume = require("./models/resume.js");
 const { jobs } = require("./models/job.js");
 const { webinar } = require("./models/webinar.js");
 
-// MongoDB Connection
 const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
 mongoose.connect(MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log("Connected to MongoDB"))
@@ -24,11 +23,11 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json()); // Keep only one JSON parser
 app.use(express.static(path.join(__dirname, "public")));
 app.use(methodOverride("_method"));
 app.engine("ejs", ejsMate);
 
-// ✅ Session Middleware
 app.use(session({
     secret: "yourSecretKey",
     resave: false,
@@ -36,26 +35,24 @@ app.use(session({
     cookie: { secure: false }
 }));
 
-// ✅ Passport Middleware
 app.use(passport.initialize());
 app.use(passport.session());
 
 const storage = multer.diskStorage({
     destination: "public/uploads/",
     filename: (req, file, cb) => {
-        cb(null, "${file.fieldname}-${Date.now()}${path.extname(file.originalname)}");
+        cb(null, ${file.fieldname}-${Date.now()}${path.extname(file.originalname)});
     }
 });
-
+const upload = multer({ storage });
 
 app.get('/', (req, res) => res.redirect("/home"));
-
-const upload = multer({ storage });
 
 function requireLogin(req, res, next) {
     if (!req.session.user) return res.redirect("/home");
     next();
 }
+
 app.get("/exasignup", (req, res) => res.render("exasignup"));
 app.get("/exasignin", (req, res) => res.render("exasignin"));
 
@@ -75,14 +72,6 @@ app.post("/exasignup", passport.authenticate("local", (err, user, info) => {
         if (err) return res.status(500).send(err);
         return res.redirect("/home");
     });
-}));
-
-app.use(express.json());
-app.use(session({
-    secret: 'your-secret-key',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false }
 }));
 
 app.post('/set-session', (req, res) => {
@@ -148,8 +137,6 @@ app.get("/quickactions", requireLogin, (req, res) => res.render("quickactions"))
 app.get("/Mocktest", requireLogin, (req, res) => res.render("Mocktest"));
 app.get("/analyse", requireLogin, (req, res) => res.render("analyse"));
 
-app.use(bodyParser.json());
-
 app.get("/autoresume", requireLogin, (req, res) => {
     res.render("autoresume");
 });
@@ -172,17 +159,15 @@ app.post("/generate", upload.single("profilePhoto"), (req, res) => {
         photo: req.file ? req.file.filename : null
     };
 
-    // DEBUGGING - Log the data to see if it's correctly received
     console.log("Resume Data Received:", resumeData);
 
     res.render("generate", { resumeData });
 });
-app.get("/exasignin", (req, res) => res.render("exasignin"));
 
 app.post("/upload", upload.single("resumeFile"), async (req, res) => {
     try {
         const resume = new Resume({
-            resumeFile: "/uploads/${req.file.filename}"
+            resumeFile: /uploads/${req.file.filename}
         });
         await resume.save();
         res.send("Resume Uploaded Successfully!");
@@ -191,12 +176,6 @@ app.post("/upload", upload.single("resumeFile"), async (req, res) => {
         res.status(500).send("Failed to upload resume.");
     }
 });
-
-
-
-
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "public"))); // Ensure CSS loads properly
 
 const jobData = {
     "Software Engineer": {
@@ -251,13 +230,7 @@ app.post("/compare-jobs", (req, res) => {
     });
 });
 
-
-
-app.get("/compare-jobs",requireLogin, (req, res) => res.render("compare-jobs"))
-
-
-
-
+app.get("/compare-jobs", requireLogin, (req, res) => res.render("compare-jobs"));
 
 app.listen(3000, () => {
     console.log("Server running on http://localhost:3000");
