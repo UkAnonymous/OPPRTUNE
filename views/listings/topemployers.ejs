@@ -1,0 +1,28 @@
+<% layout("/layouts/boilerplate") %>
+
+
+
+<div class="container"> 
+  <table> 
+<thead>
+  
+  <tr>
+      <th>Job Title</th>
+      <th>salary</th>
+      <th>Location</th>
+      <th>Rating</th> <!-- Add Rating Header -->
+  </tr>
+</thead>
+<tbody>
+  <% for (let jobs of jobListings) { %>
+      <tr>
+          <td><%= jobs.title %></td>
+          <td><%= jobs.salary%></td>
+          <td><%= jobs.location %></td>
+          <td><%= jobs.rating %></td> <!-- Add Rating Data -->
+      </tr>
+  <% } %>
+    
+</tbody>
+</table>
+</div>
